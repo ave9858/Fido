@@ -302,7 +302,7 @@ function Add-Entry([int]$pos, [string]$Name, [array]$Items, [string]$DisplayName
 	return $Combo
 }
 
-function Refresh-Control([object]$Control) {
+function Update-Control([object]$Control) {
 	$Control.Dispatcher.Invoke("Render", [Windows.Input.InputEventHandler] { $Continue.UpdateLayout() }, $null, $null) | Out-Null
 }
 
@@ -396,9 +396,9 @@ function Error([string]$ErrorMessage) {
 	Write-Host Error: $ErrorMessage
 	if (!$Cmd) {
 		$XMLForm.Title = $(Get-Translation("Error")) + ": " + $ErrorMessage
-		Refresh-Control($XMLForm)
+		Update-Control($XMLForm)
 		$XMLGrid.Children[2 * $script:Stage + 1].IsEnabled = $true
-		$UserInput = [System.Windows.MessageBox]::Show($XMLForm.Title, $(Get-Translation("Error")), "OK", "Error")
+		[void][System.Windows.MessageBox]::Show($XMLForm.Title, $(Get-Translation("Error")), "OK", "Error")
 		$script:ExitCode = $script:Stage--
 	}
  else {
@@ -431,7 +431,6 @@ $ltrm = "‎"
 if ($Cmd) {
 	$ltrm = ""
 }
-$MaxStage = 4
 # Can't reuse the same sessionId for x64 and ARM64. The Microsoft servers
 # are purposefully designed to ever process one specific download request
 # that matches the last SKUs retrieved.
@@ -476,7 +475,7 @@ if ($LocData -and !$LocData.StartsWith("en-US")) {
 $QueryLocale = $Locale
 
 # Convert a size in bytes to a human readable string
-function Size-To-Human-Readable([uint64]$size) {
+function ConvertTo-HumanReadableSize([uint64]$size) {
 	$suffix = "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"
 	$i = 0
 	while ($size -gt 1kb) {
@@ -487,7 +486,7 @@ function Size-To-Human-Readable([uint64]$size) {
 }
 
 # Check if the locale we want is available - Fall back to en-US otherwise
-function Check-Locale {
+function Test-Locale {
 	try {
 		$url = "https://www.microsoft.com/" + $QueryLocale + "/software-download/"
 		if ($Verbosity -ge 2) {
@@ -518,7 +517,7 @@ function Get-Code-715-123130-Message {
 		$pattern = '.*<input id="msg-01" type="hidden" value="(.*?)"/>.*'
 		$msg = [regex]::Match($r, $pattern).Groups[1].Value
 		$msg = $msg -replace "&lt;", "<" -replace "<[^>]+>" -replace "\s+", " "
-		if (($msg -eq $null) -or !($msg -match "715-123130")) {
+		if (($null -eq $msg) -or !($msg -match "715-123130")) {
 			throw
 		}
 	}
@@ -594,7 +593,7 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition) 
 			}
 			try {
 				$r = Invoke-RestMethod -UseBasicParsing -TimeoutSec $DefaultTimeout -SessionVariable "Session" $url
-				if ($r -eq $null) {
+				if ($null -eq $r) {
 					throw "Could not retrieve languages from server"
 				}
 				if ($Verbosity -ge 5) {
@@ -686,7 +685,7 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 				# Must add a referer for this request, else Microsoft's servers may deny it
 				$ref = "https://www.microsoft.com/software-download/windows11"
 				$r = Invoke-RestMethod -Headers @{ "Referer" = $ref } -UseBasicParsing -TimeoutSec $DefaultTimeout -SessionVariable "Session" $url
-				if ($r -eq $null) {
+				if ($null -eq $r) {
 					throw "Could not retrieve architectures from server"
 				}
 				if ($Verbosity -ge 5) {
@@ -729,7 +728,7 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 }
 
 # Process the download URL by either sending it through the pipe or by opening the browser
-function Process-Download-Link([string]$Url) {
+function Invoke-DownloadLink([string]$Url) {
 	try {
 		if ($PipeName -and !$Check.IsChecked) {
 			Send-Message -PipeName $PipeName -Message $Url
@@ -741,7 +740,7 @@ function Process-Download-Link([string]$Url) {
 				# PowerShell implicit conversions are iffy, so we need to force them...
 				$str_size = (Invoke-WebRequest -UseBasicParsing -TimeoutSec $DefaultTimeout -Uri $Url -Method Head).Headers.'Content-Length'
 				$tmp_size = [uint64]::Parse($str_size)
-				$Size = Size-To-Human-Readable $tmp_size
+				$Size = ConvertTo-HumanReadableSize $tmp_size
 				Write-Host "Downloading '$File' ($Size)..."
 				Start-BitsTransfer -Source $Url -Destination $File
 			}
@@ -762,8 +761,6 @@ if ($Cmd) {
 	$winVersionId = $null
 	$winReleaseId = $null
 	$winEditionId = $null
-	$winLanguageId = $null
-	$winLanguageName = $null
 	$winLink = $null
 
 	# Windows 7 and non Windows platforms are too much of a liability
@@ -788,7 +785,7 @@ if ($Cmd) {
 		}
 		$i++
 	}
-	if ($winVersionId -eq $null) {
+	if ($null -eq $winVersionId) {
 		if ($Win -ne "List") {
 			Write-Host "Invalid Windows version provided."
 			Write-Host "Use '-Win List' for a list of available Windows versions."
@@ -814,7 +811,7 @@ if ($Cmd) {
 			break;
 		}
 	}
-	if ($winReleaseId -eq $null) {
+	if ($null -eq $winReleaseId) {
 		if ($Rel -ne "List") {
 			Write-Host "Invalid Windows release provided."
 			Write-Host "Use '-Rel List' for a list of available $Selected releases or '-Rel Latest' for latest."
@@ -840,7 +837,7 @@ if ($Cmd) {
 			break;
 		}
 	}
-	if ($winEditionId -eq $null) {
+	if ($null -eq $winEditionId) {
 		if ($Ed -ne "List") {
 			Write-Host "Invalid Windows edition provided."
 			Write-Host "Use '-Ed List' for a list of available editions or remove the -Ed parameter to use default."
@@ -877,7 +874,7 @@ if ($Cmd) {
 		}
 		$i++
 	}
-	if ($winLanguage -eq $null) {
+	if ($null -eq $winLanguage) {
 		if ($Lang -ne "List") {
 			Write-Host "Invalid Windows language provided."
 			Write-Host "Use '-Lang List' for a list of available languages or remove the option to use system default."
@@ -908,7 +905,7 @@ if ($Cmd) {
 		}
 		$i++
 	}
-	if ($winLink -eq $null) {
+	if ($null -eq $winLink) {
 		if ($Arch -ne "List") {
 			Write-Host "Invalid Windows architecture provided."
 			Write-Host "Use '-Arch List' for a list of available architectures or remove the option to use system default."
@@ -923,7 +920,7 @@ if ($Cmd) {
 	}
  else {
 		Write-Host "Selected: $Selected"
-		$ExitCode = Process-Download-Link $winLink.Url
+		$ExitCode = Invoke-DownloadLink $winLink.Url
 	}
 
 	# Clean up & exit
@@ -969,17 +966,17 @@ $Continue.add_click({
 		$XMLGrid.Children[2 * $Stage + 1].IsEnabled = $false
 		$Continue.IsEnabled = $false
 		$Back.IsEnabled = $false
-		Refresh-Control($Continue)
-		Refresh-Control($Back)
+		Update-Control($Continue)
+		Update-Control($Back)
 
 		switch ($Stage) {
 
 			1 {
 				# Windows Version selection
 				$XMLForm.Title = Get-Translation($English[12])
-				Refresh-Control($XMLForm)
+				Update-Control($XMLForm)
 				if ($WindowsVersion.SelectedValue.Version.StartsWith("Windows")) {
-					Check-Locale
+					Test-Locale
 				}
 				$releases = Get-Windows-Releases $WindowsVersion.SelectedValue.Index
 				$script:WindowsRelease = Add-Entry $Stage "Release" $releases
@@ -996,7 +993,7 @@ $Continue.add_click({
 			3 {
 				# Product Edition selection => Request and populate languages
 				$XMLForm.Title = Get-Translation($English[12])
-				Refresh-Control($XMLForm)
+				Update-Control($XMLForm)
 				$languages = Get-Windows-Languages $WindowsVersion.SelectedValue.Index $ProductEdition.SelectedValue.Id
 				if ($languages.Length -eq 0) {
 					break
@@ -1009,7 +1006,7 @@ $Continue.add_click({
 			4 {
 				# Language selection => Request and populate Arch download links
 				$XMLForm.Title = Get-Translation($English[12])
-				Refresh-Control($XMLForm)
+				Update-Control($XMLForm)
 				$links = Get-Windows-Download-Links $WindowsVersion.SelectedValue.Index $WindowsRelease.SelectedValue.Index $ProductEdition.SelectedValue.Id $Language.SelectedValue
 				if ($links.Length -eq 0) {
 					break
@@ -1037,7 +1034,7 @@ $Continue.add_click({
 
 			5 {
 				# Arch selection => Return selected download link
-				$script:ExitCode = Process-Download-Link $Architecture.SelectedValue.Url
+				$script:ExitCode = Invoke-DownloadLink $Architecture.SelectedValue.Url
 				$XMLForm.Close()
 			}
 		}
@@ -1074,7 +1071,7 @@ $Back.add_click({
 			}
 			else {
 				$Continue.Content = Get-Translation("Continue")
-				Refresh-Control($Continue)
+				Update-Control($Continue)
 			}
 		}
 	})
