@@ -55,7 +55,8 @@ param(
 
 try {
 	[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-} catch {}
+}
+catch {}
 
 $Cmd = $false
 if ($Win -or $Rel -or $Ed -or $Lang -or $Arch -or $GetUrl) {
@@ -65,8 +66,7 @@ if ($Win -or $Rel -or $Ed -or $Lang -or $Arch -or $GetUrl) {
 # Return a decimal Windows version that we can then check for platform support.
 # Note that because we don't want to have to support this script on anything
 # other than Windows, this call returns 0.0 for PowerShell running on Linux/Mac.
-function Get-Platform-Version()
-{
+function Get-Platform-Version() {
 	$version = 0.0
 	$platform = [string][System.Environment]::OSVersion.Platform
 	# This will filter out non Windows platforms
@@ -122,8 +122,7 @@ $Signature = @{
 if (!$Cmd) {
 	Write-Host Please Wait...
 
-	if (!("WinAPI.Utils" -as [type]))
-	{
+	if (!("WinAPI.Utils" -as [type])) {
 		Add-Type @Signature
 	}
 	Add-Type -AssemblyName PresentationFramework
@@ -208,8 +207,7 @@ $WindowsVersions = @(
 #endregion
 
 #region Functions
-function Select-Language([string]$LangName)
-{
+function Select-Language([string]$LangName) {
 	# Use the system locale to try select the most appropriate language
 	[string]$SysLocale = [System.Globalization.CultureInfo]::CurrentUICulture.Name
 	if (($SysLocale.StartsWith("ar") -and $LangName -like "*Arabic*") -or `
@@ -259,8 +257,7 @@ function Select-Language([string]$LangName)
 	return $false
 }
 
-function Add-Entry([int]$pos, [string]$Name, [array]$Items, [string]$DisplayName)
-{
+function Add-Entry([int]$pos, [string]$Name, [array]$Items, [string]$DisplayName) {
 	$Title = New-Object System.Windows.Controls.TextBlock
 	$Title.FontSize = $WindowsVersionTitle.FontSize
 	$Title.Height = $WindowsVersionTitle.Height;
@@ -287,7 +284,8 @@ function Add-Entry([int]$pos, [string]$Name, [array]$Items, [string]$DisplayName
 		$Combo.ItemsSource = $Items
 		if ($DisplayName) {
 			$Combo.DisplayMemberPath = $DisplayName
-		} else {
+		}
+		else {
 			$Combo.DisplayMemberPath = $Name
 		}
 	}
@@ -304,18 +302,17 @@ function Add-Entry([int]$pos, [string]$Name, [array]$Items, [string]$DisplayName
 	return $Combo
 }
 
-function Refresh-Control([object]$Control)
-{
+function Refresh-Control([object]$Control) {
 	$Control.Dispatcher.Invoke("Render", [Windows.Input.InputEventHandler] { $Continue.UpdateLayout() }, $null, $null) | Out-Null
 }
 
-function Send-Message([string]$PipeName, [string]$Message)
-{
+function Send-Message([string]$PipeName, [string]$Message) {
 	[System.Text.Encoding]$Encoding = [System.Text.Encoding]::UTF8
 	$Pipe = New-Object -TypeName System.IO.Pipes.NamedPipeClientStream -ArgumentList ".", $PipeName, ([System.IO.Pipes.PipeDirection]::Out), ([System.IO.Pipes.PipeOptions]::None), ([System.Security.Principal.TokenImpersonationLevel]::Impersonation)
 	try {
 		$Pipe.Connect(1000)
-	} catch {
+	}
+ catch {
 		Write-Host $_.Exception.Message
 	}
 	$bRequest = $Encoding.GetBytes($Message)
@@ -327,11 +324,10 @@ function Send-Message([string]$PipeName, [string]$Message)
 # From https://www.powershellgallery.com/packages/IconForGUI/1.5.2
 # Copyright © 2016 Chris Carter. All rights reserved.
 # License: https://creativecommons.org/licenses/by-sa/4.0/
-function ConvertTo-ImageSource
-{
+function ConvertTo-ImageSource {
 	[CmdletBinding()]
 	Param(
-		[Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
 		[System.Drawing.Icon]$Icon
 	)
 
@@ -339,7 +335,7 @@ function ConvertTo-ImageSource
 		foreach ($i in $Icon) {
 			[System.Windows.Interop.Imaging]::CreateBitmapSourceFromHIcon(
 				$i.Handle,
-				(New-Object System.Windows.Int32Rect -Args 0,0,$i.Width, $i.Height),
+				(New-Object System.Windows.Int32Rect -Args 0, 0, $i.Width, $i.Height),
 				[System.Windows.Media.Imaging.BitmapSizeOptions]::FromEmptyOptions()
 			)
 		}
@@ -347,8 +343,7 @@ function ConvertTo-ImageSource
 }
 
 # Translate a message string
-function Get-Translation([string]$Text)
-{
+function Get-Translation([string]$Text) {
 	if (!($English -contains $Text)) {
 		Write-Host "Error: '$Text' is not a translatable string"
 		return "(Untranslated)"
@@ -361,7 +356,8 @@ function Get-Translation([string]$Text)
 			if ($English[$i] -eq $Text) {
 				if ($Localized[$i]) {
 					return $Localized[$i]
-				} else {
+				}
+				else {
 					return $Text
 				}
 			}
@@ -371,43 +367,41 @@ function Get-Translation([string]$Text)
 }
 
 # Get the underlying *native* CPU architecture
-function Get-Arch
-{
+function Get-Arch {
 	$Arch = Get-CimInstance -ClassName Win32_Processor | Select-Object -ExpandProperty Architecture
-	switch($Arch) {
-	0  { return "x86" }
-	1  { return "MIPS" }
-	2  { return "Alpha" }
-	3  { return "PowerPC" }
-	5  { return "ARM32" }
-	6  { return "IA64" }
-	9  { return "x64" }
-	12 { return "ARM64" }
-	default { return "Unknown"}
+	switch ($Arch) {
+		0 { return "x86" }
+		1 { return "MIPS" }
+		2 { return "Alpha" }
+		3 { return "PowerPC" }
+		5 { return "ARM32" }
+		6 { return "IA64" }
+		9 { return "x64" }
+		12 { return "ARM64" }
+		default { return "Unknown" }
 	}
 }
 
 # Convert a Microsoft arch type code to a formal architecture name
-function Get-Arch-From-Type([int]$Type)
-{
-	switch($Type) {
-	0 { return "x86" }
-	1 { return "x64" }
-	2 { return "ARM64" }
-	default { return "Unknown"}
+function Get-Arch-From-Type([int]$Type) {
+	switch ($Type) {
+		0 { return "x86" }
+		1 { return "x64" }
+		2 { return "ARM64" }
+		default { return "Unknown" }
 	}
 }
 
-function Error([string]$ErrorMessage)
-{
+function Error([string]$ErrorMessage) {
 	Write-Host Error: $ErrorMessage
 	if (!$Cmd) {
 		$XMLForm.Title = $(Get-Translation("Error")) + ": " + $ErrorMessage
 		Refresh-Control($XMLForm)
 		$XMLGrid.Children[2 * $script:Stage + 1].IsEnabled = $true
-		$UserInput = [System.Windows.MessageBox]::Show($XMLForm.Title,  $(Get-Translation("Error")), "OK", "Error")
+		$UserInput = [System.Windows.MessageBox]::Show($XMLForm.Title, $(Get-Translation("Error")), "OK", "Error")
 		$script:ExitCode = $script:Stage--
-	} else {
+	}
+ else {
 		$script:ExitCode = 2
 	}
 }
@@ -449,9 +443,11 @@ $ProfileId = "606624d44113"
 $Verbosity = 1
 if ($Debug) {
 	$Verbosity = 5
-} elseif ($Verbose) {
+}
+elseif ($Verbose) {
 	$Verbosity = 2
-} elseif ($Cmd -and $GetUrl) {
+}
+elseif ($Cmd -and $GetUrl) {
 	$Verbosity = 0
 }
 $PlatformArch = Get-Arch
@@ -459,9 +455,9 @@ $PlatformArch = Get-Arch
 
 # Localization
 $EnglishMessages = "en-US|Version|Release|Edition|Language|Architecture|Download|Continue|Back|Close|Cancel|Error|Please wait...|" +
-	"Download using a browser|Download of Windows ISOs is unavailable due to Microsoft having altered their website to prevent it.|" +
-	"PowerShell 3.0 or later is required to run this script.|Do you want to go online and download it?|" +
-	"This feature is not available on this platform."
+"Download using a browser|Download of Windows ISOs is unavailable due to Microsoft having altered their website to prevent it.|" +
+"PowerShell 3.0 or later is required to run this script.|Do you want to go online and download it?|" +
+"This feature is not available on this platform."
 [string[]]$English = $EnglishMessages.Split('|')
 [string[]]$Localized = $null
 if ($LocData -and !$LocData.StartsWith("en-US")) {
@@ -471,7 +467,8 @@ if ($LocData -and !$LocData.StartsWith("en-US")) {
 		while ($Localized.Length -ne $English.Length) {
 			$Localized += $English[$Localized.Length]
 		}
-	} elseif ($Localized.Length -gt $English.Length) {
+	}
+ elseif ($Localized.Length -gt $English.Length) {
 		$Localized = $LocData.Split('|')[0..($English.Length - 1)]
 	}
 	$Locale = $Localized[0]
@@ -479,8 +476,7 @@ if ($LocData -and !$LocData.StartsWith("en-US")) {
 $QueryLocale = $Locale
 
 # Convert a size in bytes to a human readable string
-function Size-To-Human-Readable([uint64]$size)
-{
+function Size-To-Human-Readable([uint64]$size) {
 	$suffix = "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"
 	$i = 0
 	while ($size -gt 1kb) {
@@ -491,15 +487,15 @@ function Size-To-Human-Readable([uint64]$size)
 }
 
 # Check if the locale we want is available - Fall back to en-US otherwise
-function Check-Locale
-{
+function Check-Locale {
 	try {
 		$url = "https://www.microsoft.com/" + $QueryLocale + "/software-download/"
 		if ($Verbosity -ge 2) {
 			Write-Host Querying $url
 		}
 		Invoke-WebRequest -UseBasicParsing -TimeoutSec $DefaultTimeout -MaximumRedirection 0 $url | Out-Null
-	} catch {
+	}
+ catch {
 		# Of course PowerShell 7 had to BREAK $_.Exception.Status on timeouts...
 		if ($_.Exception.Status -eq "Timeout" -or $_.Exception.GetType().Name -eq "TaskCanceledException") {
 			Write-Host Operation Timed out
@@ -508,8 +504,7 @@ function Check-Locale
 	}
 }
 
-function Get-Code-715-123130-Message
-{
+function Get-Code-715-123130-Message {
 	try {
 		$url = "https://www.microsoft.com/" + $QueryLocale + "/software-download/windows11"
 		if ($Verbosity -ge 2) {
@@ -526,8 +521,9 @@ function Get-Code-715-123130-Message
 		if (($msg -eq $null) -or !($msg -match "715-123130")) {
 			throw
 		}
-	} catch {
-		$msg  = "Your IP address has been banned by Microsoft for issuing too many ISO download requests or for "
+	}
+ catch {
+		$msg = "Your IP address has been banned by Microsoft for issuing too many ISO download requests or for "
 		$msg += "belonging to a region of the world where sanctions currently apply. Please try again later.`r`n"
 		$msg += "If you believe this ban to be in error, you can try contacting Microsoft by referring to "
 		$msg += "message code 715-123130 and session ID "
@@ -536,8 +532,7 @@ function Get-Code-715-123130-Message
 }
 
 # Return an array of releases (e.g. 20H2, 21H1, ...) for the selected Windows version
-function Get-Windows-Releases([int]$SelectedVersion)
-{
+function Get-Windows-Releases([int]$SelectedVersion) {
 	$i = 0
 	$releases = @()
 	foreach ($version in $WindowsVersions[$SelectedVersion]) {
@@ -550,11 +545,9 @@ function Get-Windows-Releases([int]$SelectedVersion)
 }
 
 # Return an array of editions (e.g. Home, Pro, etc) for the selected Windows release
-function Get-Windows-Editions([int]$SelectedVersion, [int]$SelectedRelease)
-{
+function Get-Windows-Editions([int]$SelectedVersion, [int]$SelectedRelease) {
 	$editions = @()
-	foreach ($release in $WindowsVersions[$SelectedVersion][$SelectedRelease])
-	{
+	foreach ($release in $WindowsVersions[$SelectedVersion][$SelectedRelease]) {
 		if ($release -is [array]) {
 			if (!($release[0].Contains("China")) -or ($Locale.StartsWith("zh"))) {
 				$editions += @(New-Object PsObject -Property @{ Edition = $release[0]; Id = $release[1] })
@@ -565,12 +558,12 @@ function Get-Windows-Editions([int]$SelectedVersion, [int]$SelectedRelease)
 }
 
 # Return an array of languages for the selected edition
-function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition)
-{
+function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition) {
 	$langs = @()
 	if ($WindowsVersions[$SelectedVersion][0][1].StartsWith("UEFI_SHELL")) {
 		$langs += @(New-Object PsObject -Property @{ DisplayName = "English (US)"; Name = "en-us"; Data = @($null) })
-	} else {
+	}
+ else {
 		$languages = [ordered]@{}
 		$SessionIndex = 0
 		foreach ($EditionId in $SelectedEdition) {
@@ -584,7 +577,8 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition)
 			}
 			try {
 				Invoke-WebRequest -UseBasicParsing -TimeoutSec $DefaultTimeout -MaximumRedirection 0 $url | Out-Null
-			} catch {
+			}
+			catch {
 				Error($_.Exception.Message)
 				return @()
 			}
@@ -620,7 +614,8 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition)
 				if ($languages.Length -eq 0) {
 					throw "Could not parse languages"
 				}
-			} catch {
+			}
+			catch {
 				Error($_.Exception.Message)
 				return @()
 			}
@@ -629,7 +624,7 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition)
 		# Need to convert to an array since PowerShell treats them differently from hashtable
 		$i = 0
 		$script:SelectedIndex = 0
-		foreach($language in $languages.Keys) {
+		foreach ($language in $languages.Keys) {
 			$langs += @(New-Object PsObject -Property @{ DisplayName = $languages[$language].DisplayName; Name = $language; Data = $languages[$language].Data })
 			if (Select-Language($language)) {
 				$script:SelectedIndex = $i
@@ -641,8 +636,7 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition)
 }
 
 # Return an array of download links for each supported arch
-function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease, [object]$SelectedEdition, [PSCustomObject]$SelectedLanguage)
-{
+function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease, [object]$SelectedEdition, [PSCustomObject]$SelectedLanguage) {
 	$links = @()
 	if ($WindowsVersions[$SelectedVersion][0][1].StartsWith("UEFI_SHELL")) {
 		$tag = $WindowsVersions[$SelectedVersion][$SelectedRelease][0].Split(' ')[0]
@@ -651,7 +645,8 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 		$link = $url + "/UEFI-Shell-" + $shell_version + "-" + $tag
 		if ($SelectedEdition -eq 0) {
 			$link += "-RELEASE.iso"
-		} else {
+		}
+		else {
 			$link += "-DEBUG.iso"
 		}
 		try {
@@ -664,16 +659,18 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 			$xml.Load($url)
 			$sep = ""
 			$archs = ""
-			foreach($arch in $xml.release.supported_archs.arch) {
+			foreach ($arch in $xml.release.supported_archs.arch) {
 				$archs += $sep + $arch
 				$sep = ", "
 			}
 			$links += @(New-Object PsObject -Property @{ Arch = $archs; Url = $link })
-		} catch {
+		}
+		catch {
 			Error($_.Exception.Message)
 			return @()
 		}
-	} else {
+	}
+ else {
 		foreach ($Entry in $SelectedLanguage.Data) {
 			$url = "https://www.microsoft.com/software-download-connector/api/GetProductDownloadLinksBySku"
 			$url += "?profile=" + $ProfileId
@@ -701,7 +698,8 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 					if ( $r.Errors[0].Type -eq 9) {
 						$msg = Get-Code-715-123130-Message
 						throw $msg + $SessionId[$Entry.SessionIndex] + "."
-					} else {
+					}
+					else {
 						throw $r.Errors[0].Value
 					}
 				}
@@ -711,7 +709,8 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 				if ($links.Length -eq 0) {
 					throw "Could not retrieve ISO download links"
 				}
-			} catch {
+			}
+			catch {
 				Error($_.Exception.Message)
 				return @()
 			}
@@ -719,7 +718,7 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 		}
 		$i = 0
 		$script:SelectedIndex = 0
-		foreach($link in $links) {
+		foreach ($link in $links) {
 			if ($link.Arch -eq $PlatformArch) {
 				$script:SelectedIndex = $i
 			}
@@ -730,12 +729,12 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 }
 
 # Process the download URL by either sending it through the pipe or by opening the browser
-function Process-Download-Link([string]$Url)
-{
+function Process-Download-Link([string]$Url) {
 	try {
 		if ($PipeName -and !$Check.IsChecked) {
 			Send-Message -PipeName $PipeName -Message $Url
-		} else {
+		}
+		else {
 			if ($Cmd) {
 				$pattern = '.*\/(.*\.iso).*'
 				$File = [regex]::Match($Url, $pattern).Groups[1].Value
@@ -745,12 +744,14 @@ function Process-Download-Link([string]$Url)
 				$Size = Size-To-Human-Readable $tmp_size
 				Write-Host "Downloading '$File' ($Size)..."
 				Start-BitsTransfer -Source $Url -Destination $File
-			} else {
+			}
+			else {
 				Write-Host Download Link: $Url
 				Start-Process -FilePath $Url
 			}
 		}
-	} catch {
+	}
+ catch {
 		Error($_.Exception.Message)
 		return 404
 	}
@@ -776,10 +777,11 @@ if ($Cmd) {
 	if ($Win -eq "List") {
 		Write-Host "Please select a Windows Version (-Win):"
 	}
-	foreach($version in $WindowsVersions) {
+	foreach ($version in $WindowsVersions) {
 		if ($Win -eq "List") {
 			Write-Host " -" $version[0][0]
-		} elseif ($version[0][0] -match $Win) {
+		}
+		elseif ($version[0][0] -match $Win) {
 			$Selected += $version[0][0]
 			$winVersionId = $i
 			break;
@@ -802,7 +804,8 @@ if ($Cmd) {
 	foreach ($release in $releases) {
 		if ($Rel -eq "List") {
 			Write-Host " -" $release.Release
-		} elseif (!$Rel -or $release.Release.StartsWith($Rel) -or $Rel -eq "Latest") {
+		}
+		elseif (!$Rel -or $release.Release.StartsWith($Rel) -or $Rel -eq "Latest") {
 			if (!$Rel -and $Verbosity -ge 1) {
 				Write-Host "No release specified (-Rel). Defaulting to '$($release.Release)'."
 			}
@@ -824,10 +827,11 @@ if ($Cmd) {
 	if ($Ed -eq "List") {
 		Write-Host "Please select a Windows Edition (-Ed) for ${Selected}:"
 	}
-	foreach($edition in $editions) {
+	foreach ($edition in $editions) {
 		if ($Ed -eq "List") {
 			Write-Host " -" $edition.Edition
-		} elseif (!$Ed -or $edition.Edition -match $Ed) {
+		}
+		elseif (!$Ed -or $edition.Edition -match $Ed) {
 			if (!$Ed -and $Verbosity -ge 1) {
 				Write-Host "No edition specified (-Ed). Defaulting to '$($edition.Edition)'."
 			}
@@ -851,7 +855,8 @@ if ($Cmd) {
 	}
 	if ($Lang -eq "List") {
 		Write-Host "Please select a Language (-Lang) for ${Selected}:"
-	} elseif ($Lang) {
+	}
+ elseif ($Lang) {
 		# Escape parentheses so that they aren't interpreted as regex
 		$Lang = $Lang.replace('(', '\(')
 		$Lang = $Lang.replace(')', '\)')
@@ -861,7 +866,8 @@ if ($Cmd) {
 	foreach ($language in $languages) {
 		if ($Lang -eq "List") {
 			Write-Host " -" $language.Name
-		} elseif ((!$Lang -and $script:SelectedIndex -eq $i) -or ($Lang -and $language.Name -match $Lang)) {
+		}
+		elseif ((!$Lang -and $script:SelectedIndex -eq $i) -or ($Lang -and $language.Name -match $Lang)) {
 			if (!$Lang -and $Verbosity -ge 1) {
 				Write-Host "No language specified (-Lang). Defaulting to '$($language.Name)'."
 			}
@@ -891,7 +897,8 @@ if ($Cmd) {
 	foreach ($link in $links) {
 		if ($Arch -eq "List") {
 			Write-Host " -" $link.Arch
-		} elseif ((!$Arch -and $script:SelectedIndex -eq $i) -or ($Arch -and $link.Arch -match $Arch)) {
+		}
+		elseif ((!$Arch -and $script:SelectedIndex -eq $i) -or ($Arch -and $link.Arch -match $Arch)) {
 			if (!$Arch -and $Verbosity -ge 1) {
 				Write-Host "No architecture specified (-Arch). Defaulting to '$($link.Arch)'."
 			}
@@ -913,7 +920,8 @@ if ($Cmd) {
 	if ($GetUrl) {
 		return $winLink.Url
 		$ExitCode = 0
-	} else {
+	}
+ else {
 		Write-Host "Selected: $Selected"
 		$ExitCode = Process-Download-Link $winLink.Url
 	}
@@ -928,7 +936,8 @@ $XAML.SelectNodes("//*[@Name]") | ForEach-Object { Set-Variable -Name ($_.Name) 
 $XMLForm.Title = $AppTitle
 if ($Icon) {
 	$XMLForm.Icon = $Icon
-} else {
+}
+else {
 	$XMLForm.Icon = [WinAPI.Utils]::ExtractIcon("imageres.dll", -5205, $true) | ConvertTo-ImageSource
 }
 if ($Locale.StartsWith("ar") -or $Locale.StartsWith("fa") -or $Locale.StartsWith("he")) {
@@ -947,7 +956,7 @@ if ($winver -le 6.1) {
 # Populate the Windows versions
 $i = 0
 $versions = @()
-foreach($version in $WindowsVersions) {
+foreach ($version in $WindowsVersions) {
 	$versions += @(New-Object PsObject -Property @{ Version = $version[0][0]; PageType = $version[0][1]; Index = $i })
 	$i++
 }
@@ -956,115 +965,122 @@ $WindowsVersion.DisplayMemberPath = "Version"
 
 # Button Action
 $Continue.add_click({
-	$script:Stage++
-	$XMLGrid.Children[2 * $Stage + 1].IsEnabled = $false
-	$Continue.IsEnabled = $false
-	$Back.IsEnabled = $false
-	Refresh-Control($Continue)
-	Refresh-Control($Back)
+		$script:Stage++
+		$XMLGrid.Children[2 * $Stage + 1].IsEnabled = $false
+		$Continue.IsEnabled = $false
+		$Back.IsEnabled = $false
+		Refresh-Control($Continue)
+		Refresh-Control($Back)
 
-	switch ($Stage) {
+		switch ($Stage) {
 
-		1 { # Windows Version selection
-			$XMLForm.Title = Get-Translation($English[12])
-			Refresh-Control($XMLForm)
-			if ($WindowsVersion.SelectedValue.Version.StartsWith("Windows")) {
-				Check-Locale
+			1 {
+				# Windows Version selection
+				$XMLForm.Title = Get-Translation($English[12])
+				Refresh-Control($XMLForm)
+				if ($WindowsVersion.SelectedValue.Version.StartsWith("Windows")) {
+					Check-Locale
+				}
+				$releases = Get-Windows-Releases $WindowsVersion.SelectedValue.Index
+				$script:WindowsRelease = Add-Entry $Stage "Release" $releases
+				$Back.Content = Get-Translation($English[8])
+				$XMLForm.Title = $AppTitle
 			}
-			$releases = Get-Windows-Releases $WindowsVersion.SelectedValue.Index
-			$script:WindowsRelease = Add-Entry $Stage "Release" $releases
-			$Back.Content = Get-Translation($English[8])
-			$XMLForm.Title = $AppTitle
-		}
 
-		2 { # Windows Release selection => Populate Product Edition
-			$editions = Get-Windows-Editions $WindowsVersion.SelectedValue.Index $WindowsRelease.SelectedValue.Index
-			$script:ProductEdition = Add-Entry $Stage "Edition" $editions
-		}
-
-		3 { # Product Edition selection => Request and populate languages
-			$XMLForm.Title = Get-Translation($English[12])
-			Refresh-Control($XMLForm)
-			$languages = Get-Windows-Languages $WindowsVersion.SelectedValue.Index $ProductEdition.SelectedValue.Id
-			if ($languages.Length -eq 0) {
-				break
+			2 {
+				# Windows Release selection => Populate Product Edition
+				$editions = Get-Windows-Editions $WindowsVersion.SelectedValue.Index $WindowsRelease.SelectedValue.Index
+				$script:ProductEdition = Add-Entry $Stage "Edition" $editions
 			}
-			$script:Language = Add-Entry $Stage "Language" $languages "DisplayName"
-			$Language.SelectedIndex = $script:SelectedIndex
-			$XMLForm.Title = $AppTitle
-		}
 
-		4 { # Language selection => Request and populate Arch download links
-			$XMLForm.Title = Get-Translation($English[12])
-			Refresh-Control($XMLForm)
-			$links = Get-Windows-Download-Links $WindowsVersion.SelectedValue.Index $WindowsRelease.SelectedValue.Index $ProductEdition.SelectedValue.Id $Language.SelectedValue
-			if ($links.Length -eq 0) {
-				break
+			3 {
+				# Product Edition selection => Request and populate languages
+				$XMLForm.Title = Get-Translation($English[12])
+				Refresh-Control($XMLForm)
+				$languages = Get-Windows-Languages $WindowsVersion.SelectedValue.Index $ProductEdition.SelectedValue.Id
+				if ($languages.Length -eq 0) {
+					break
+				}
+				$script:Language = Add-Entry $Stage "Language" $languages "DisplayName"
+				$Language.SelectedIndex = $script:SelectedIndex
+				$XMLForm.Title = $AppTitle
 			}
-			$script:Architecture = Add-Entry $Stage "Architecture" $links "Arch"
-			if ($PipeName) {
-				$XMLForm.Height += $dh / 2;
-				$Margin = $Continue.Margin
-				$top = $Margin.Top
-				$Margin.Top += $dh /2
-				$Continue.Margin = $Margin
-				$Margin = $Back.Margin
-				$Margin.Top += $dh / 2
-				$Back.Margin = $Margin
-				$Margin = $Check.Margin
-				$Margin.Top = $top - 2
-				$Check.Margin = $Margin
-				$Check.Content = Get-Translation($English[13])
-				$Check.Visibility = "Visible"
-			}
-			$Architecture.SelectedIndex = $script:SelectedIndex
-			$Continue.Content = Get-Translation("Download")
-			$XMLForm.Title = $AppTitle
-		}
 
-		5 { # Arch selection => Return selected download link
-			$script:ExitCode = Process-Download-Link $Architecture.SelectedValue.Url
-			$XMLForm.Close()
+			4 {
+				# Language selection => Request and populate Arch download links
+				$XMLForm.Title = Get-Translation($English[12])
+				Refresh-Control($XMLForm)
+				$links = Get-Windows-Download-Links $WindowsVersion.SelectedValue.Index $WindowsRelease.SelectedValue.Index $ProductEdition.SelectedValue.Id $Language.SelectedValue
+				if ($links.Length -eq 0) {
+					break
+				}
+				$script:Architecture = Add-Entry $Stage "Architecture" $links "Arch"
+				if ($PipeName) {
+					$XMLForm.Height += $dh / 2;
+					$Margin = $Continue.Margin
+					$top = $Margin.Top
+					$Margin.Top += $dh / 2
+					$Continue.Margin = $Margin
+					$Margin = $Back.Margin
+					$Margin.Top += $dh / 2
+					$Back.Margin = $Margin
+					$Margin = $Check.Margin
+					$Margin.Top = $top - 2
+					$Check.Margin = $Margin
+					$Check.Content = Get-Translation($English[13])
+					$Check.Visibility = "Visible"
+				}
+				$Architecture.SelectedIndex = $script:SelectedIndex
+				$Continue.Content = Get-Translation("Download")
+				$XMLForm.Title = $AppTitle
+			}
+
+			5 {
+				# Arch selection => Return selected download link
+				$script:ExitCode = Process-Download-Link $Architecture.SelectedValue.Url
+				$XMLForm.Close()
+			}
 		}
-	}
-	$Continue.IsEnabled = $true
-	if ($Stage -ge 0) {
-		$Back.IsEnabled = $true
-	}
-})
+		$Continue.IsEnabled = $true
+		if ($Stage -ge 0) {
+			$Back.IsEnabled = $true
+		}
+	})
 
 $Back.add_click({
-	if ($Stage -eq 0) {
-		$XMLForm.Close()
-	} else {
-		$XMLGrid.Children.RemoveAt(2 * $Stage + 3)
-		$XMLGrid.Children.RemoveAt(2 * $Stage + 2)
-		$XMLGrid.Children[2 * $Stage + 1].IsEnabled = $true
-		$dh2 = $dh
-		if ($Stage -eq 4 -and $PipeName) {
-			$Check.Visibility = "Collapsed"
-			$dh2 += $dh / 2
-		}
-		$XMLForm.Height -= $dh2;
-		$Margin = $Continue.Margin
-		$Margin.Top -= $dh2
-		$Continue.Margin = $Margin
-		$Margin = $Back.Margin
-		$Margin.Top -= $dh2
-		$Back.Margin = $Margin
-		$script:Stage = $Stage - 1
-		$XMLForm.Title = $AppTitle
 		if ($Stage -eq 0) {
-			$Back.Content = Get-Translation("Close")
-		} else {
-			$Continue.Content = Get-Translation("Continue")
-			Refresh-Control($Continue)
+			$XMLForm.Close()
 		}
-	}
-})
+		else {
+			$XMLGrid.Children.RemoveAt(2 * $Stage + 3)
+			$XMLGrid.Children.RemoveAt(2 * $Stage + 2)
+			$XMLGrid.Children[2 * $Stage + 1].IsEnabled = $true
+			$dh2 = $dh
+			if ($Stage -eq 4 -and $PipeName) {
+				$Check.Visibility = "Collapsed"
+				$dh2 += $dh / 2
+			}
+			$XMLForm.Height -= $dh2;
+			$Margin = $Continue.Margin
+			$Margin.Top -= $dh2
+			$Continue.Margin = $Margin
+			$Margin = $Back.Margin
+			$Margin.Top -= $dh2
+			$Back.Margin = $Margin
+			$script:Stage = $Stage - 1
+			$XMLForm.Title = $AppTitle
+			if ($Stage -eq 0) {
+				$Back.Content = Get-Translation("Close")
+			}
+			else {
+				$Continue.Content = Get-Translation("Continue")
+				Refresh-Control($Continue)
+			}
+		}
+	})
 
 # Display the dialog
-$XMLForm.Add_Loaded({$XMLForm.Activate()})
+$XMLForm.Add_Loaded({ $XMLForm.Activate() })
 $XMLForm.ShowDialog() | Out-Null
 
 # Clean up & exit
