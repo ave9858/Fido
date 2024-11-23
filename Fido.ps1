@@ -312,7 +312,7 @@ function Send-Message([string]$PipeName, [string]$Message) {
 	try {
 		$Pipe.Connect(1000)
 	}
- catch {
+	catch {
 		Write-Host $_.Exception.Message
 	}
 	$bRequest = $Encoding.GetBytes($Message)
@@ -401,7 +401,7 @@ function Error([string]$ErrorMessage) {
 		[void][System.Windows.MessageBox]::Show($XMLForm.Title, $(Get-Translation("Error")), "OK", "Error")
 		$script:ExitCode = $script:Stage--
 	}
- else {
+	else {
 		$script:ExitCode = 2
 	}
 }
@@ -467,7 +467,7 @@ if ($LocData -and !$LocData.StartsWith("en-US")) {
 			$Localized += $English[$Localized.Length]
 		}
 	}
- elseif ($Localized.Length -gt $English.Length) {
+	elseif ($Localized.Length -gt $English.Length) {
 		$Localized = $LocData.Split('|')[0..($English.Length - 1)]
 	}
 	$Locale = $Localized[0]
@@ -494,7 +494,7 @@ function Test-Locale {
 		}
 		Invoke-WebRequest -UseBasicParsing -TimeoutSec $DefaultTimeout -MaximumRedirection 0 $url | Out-Null
 	}
- catch {
+	catch {
 		# Of course PowerShell 7 had to BREAK $_.Exception.Status on timeouts...
 		if ($_.Exception.Status -eq "Timeout" -or $_.Exception.GetType().Name -eq "TaskCanceledException") {
 			Write-Host Operation Timed out
@@ -521,7 +521,7 @@ function Get-Code-715-123130-Message {
 			throw
 		}
 	}
- catch {
+	catch {
 		$msg = "Your IP address has been banned by Microsoft for issuing too many ISO download requests or for "
 		$msg += "belonging to a region of the world where sanctions currently apply. Please try again later.`r`n"
 		$msg += "If you believe this ban to be in error, you can try contacting Microsoft by referring to "
@@ -562,7 +562,7 @@ function Get-Windows-Languages([int]$SelectedVersion, [object]$SelectedEdition) 
 	if ($WindowsVersions[$SelectedVersion][0][1].StartsWith("UEFI_SHELL")) {
 		$langs += @(New-Object PsObject -Property @{ DisplayName = "English (US)"; Name = "en-us"; Data = @($null) })
 	}
- else {
+	else {
 		$languages = [ordered]@{}
 		$SessionIndex = 0
 		foreach ($EditionId in $SelectedEdition) {
@@ -669,7 +669,7 @@ function Get-Windows-Download-Links([int]$SelectedVersion, [int]$SelectedRelease
 			return @()
 		}
 	}
- else {
+	else {
 		foreach ($Entry in $SelectedLanguage.Data) {
 			$url = "https://www.microsoft.com/software-download-connector/api/GetProductDownloadLinksBySku"
 			$url += "?profile=" + $ProfileId
@@ -750,7 +750,7 @@ function Invoke-DownloadLink([string]$Url) {
 			}
 		}
 	}
- catch {
+	catch {
 		Error($_.Exception.Message)
 		return 404
 	}
@@ -853,7 +853,7 @@ if ($Cmd) {
 	if ($Lang -eq "List") {
 		Write-Host "Please select a Language (-Lang) for ${Selected}:"
 	}
- elseif ($Lang) {
+	elseif ($Lang) {
 		# Escape parentheses so that they aren't interpreted as regex
 		$Lang = $Lang.replace('(', '\(')
 		$Lang = $Lang.replace(')', '\)')
@@ -918,7 +918,7 @@ if ($Cmd) {
 		return $winLink.Url
 		$ExitCode = 0
 	}
- else {
+	else {
 		Write-Host "Selected: $Selected"
 		$ExitCode = Invoke-DownloadLink $winLink.Url
 	}
