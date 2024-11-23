@@ -368,17 +368,22 @@ function Get-Translation([string]$Text) {
 
 # Get the underlying *native* CPU architecture
 function Get-Arch {
-	$Arch = Get-CimInstance -ClassName Win32_Processor | Select-Object -ExpandProperty Architecture
-	switch ($Arch) {
-		0 { return "x86" }
-		1 { return "MIPS" }
-		2 { return "Alpha" }
-		3 { return "PowerPC" }
-		5 { return "ARM32" }
-		6 { return "IA64" }
-		9 { return "x64" }
-		12 { return "ARM64" }
-		default { return "Unknown" }
+	if ($IsWindows -ne $false) {
+		$Arch = Get-CimInstance -ClassName Win32_Processor | Select-Object -ExpandProperty Architecture
+		switch ($Arch) {
+			0 { return "x86" }
+			1 { return "MIPS" }
+			2 { return "Alpha" }
+			3 { return "PowerPC" }
+			5 { return "ARM32" }
+			6 { return "IA64" }
+			9 { return "x64" }
+			12 { return "ARM64" }
+			default { return "Unknown" }
+		}
+	}
+	else {
+		return "Unknown"
 	}
 }
 
@@ -742,7 +747,12 @@ function Invoke-DownloadLink([string]$Url) {
 				$tmp_size = [uint64]::Parse($str_size)
 				$Size = ConvertTo-HumanReadableSize $tmp_size
 				Write-Host "Downloading '$File' ($Size)..."
-				Start-BitsTransfer -Source $Url -Destination $File
+				if ($IsWindows -ne $false) {
+					Start-BitsTransfer -Source $Url -Destination $File
+				}
+				else {
+					(New-Object Net.WebClient).DownloadFile($Url, $File)
+				}
 			}
 			else {
 				Write-Host Download Link: $Url
@@ -763,8 +773,8 @@ if ($Cmd) {
 	$winEditionId = $null
 	$winLink = $null
 
-	# Windows 7 and non Windows platforms are too much of a liability
-	if ($winver -le 6.1) {
+	# Windows 7 is too much of a liability
+	if ($winver -le 6.1 -and $IsWindows -ne $false) {
 		Error(Get-Translation("This feature is not available on this platform."))
 		exit 403
 	}
