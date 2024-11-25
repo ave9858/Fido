@@ -1,5 +1,5 @@
 ﻿#
-# Fido v1.63 - ISO Downloader, for Microsoft Windows and UEFI Shell
+# Fido v1.64 - ISO Downloader, for Microsoft Windows and UEFI Shell
 # Copyright © 2019-2024 Pete Batard <pete@akeo.ie>
 # Command line support: Copyright © 2021 flx5
 # ConvertTo-ImageSource: Copyright © 2016 Chris Carter
@@ -46,6 +46,9 @@ param(
 	[string]$Arch,
 	# (Optional) Only display the download URL [Toggles commandline mode]
 	[switch]$GetUrl = $false,
+	# (Optional) Specify the architecture of the underlying CPU.
+	# This avoids a VERY TIME CONSUMING call to WMI to autodetect the arch.
+	[string]$PlatformArch,
 	# (Optional) Increase verbosity
 	[switch]$Verbose = $false,
 	# (Optional) Produce debugging information
@@ -155,6 +158,11 @@ $WindowsVersions = @(
 	)
 	@(
 		@("UEFI Shell 2.2", "UEFI_SHELL 2.2"),
+		@(
+			"24H2 (edk2-stable202411)",
+			@("Release", 0),
+			@("Debug", 1)
+		),
 		@(
 			"24H1 (edk2-stable202405)",
 			@("Release", 0),
@@ -454,7 +462,9 @@ elseif ($Verbose) {
 elseif ($Cmd -and $GetUrl) {
 	$Verbosity = 0
 }
-$PlatformArch = Get-Arch
+if (!$PlatformArch) {
+	$PlatformArch = Get-Arch
+}
 #endregion
 
 # Localization
